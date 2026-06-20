@@ -125,8 +125,7 @@ Note: `tflite_flutter` is NOT used — inference runs on the native Android side
 
 - No CI/CD pipeline.
 - Release signing uses debug config.
-- AndroidManifest namespace (`com.example.android`) doesn't match app ID (`com.temanisyarat.android`).
-- Two `MainActivity.kt` files exist (one in `com.example.android`, one in `com.example.temanisyarat`) — merge artifact.
+- AndroidManifest namespace (`com.hibah.temanisyarat`) matches app ID (`com.hibah.temanisyarat`).
 - `test/widget_test.dart` still contains the default Flutter counter template test (not updated for current app).
 - No `settings.gradle.kts` at Flutter project root — Android settings live inside `android/` subdirectory.
 

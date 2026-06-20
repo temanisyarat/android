@@ -1,6 +1,6 @@
-package com.example.android
+package com.hibah.temanisyarat
 
-import com.example.android.handlandmarker.HandLandmarkerPlugin
+import com.hibah.temanisyarat.handlandmarker.HandLandmarkerPlugin
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 

@@ -1,4 +1,4 @@
-package com.example.android.handlandmarker
+package com.hibah.temanisyarat.handlandmarker
 
 import android.app.Activity
 import android.content.Context
