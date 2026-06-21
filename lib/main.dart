@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'constants.dart';
 import 'pages/translate/translate_page.dart';
+import 'services/sanity_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,65 +90,7 @@ const List<IsyaratItem> isyaratList = [
   ),
 ];
 
-class Artikel {
-  final String title;
-  final String description;
-  final String date;
-  final String readTime;
-  final String body;
 
-  const Artikel({
-    required this.title,
-    required this.description,
-    required this.date,
-    required this.readTime,
-    required this.body,
-  });
-}
-
-const List<Artikel> artikelList = [
-  Artikel(
-    title: 'Profil Tim Pengembang',
-    description: 'Tentang tim hibah berdampak Universitas Sebelas Maret #00000',
-    date: 'Today',
-    readTime: '3 min read',
-    body:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-  ),
-  Artikel(
-    title: 'Tentang GERKATIN Surakarta',
-    description: 'Gerakan untuk Kesejahteraan Tunarungu Indonesia',
-    date: 'Today',
-    readTime: '3 min read',
-    body:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-  ),
-  Artikel(
-    title: 'Mengenal BISINDO Solo',
-    description:
-        'Varian dari BISINDO yang dibentuk oleh komunitas tuli Surakarta',
-    date: 'Today',
-    readTime: '3 min read',
-    body:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-  ),
-  Artikel(
-    title: 'Sejarah Bahasa Isyarat Indonesia',
-    description: 'Perkembangan BISINDO dari masa ke masa sejak era 1980-an',
-    date: 'Today',
-    readTime: '5 min read',
-    body:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-  ),
-  Artikel(
-    title: 'Cara Belajar BISINDO untuk Pemula',
-    description: 'Panduan lengkap memulai belajar Bahasa Isyarat Indonesia',
-    date: 'Today',
-    readTime: '4 min read',
-    body:
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-  ),
-];
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -251,10 +194,23 @@ class _BottomNav extends StatelessWidget {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final Function(int) onSwitchTab;
 
   const HomePage({super.key, required this.onSwitchTab});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late Future<List<SanityArticle>> _articlesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _articlesFuture = SanityService.getArticles();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -323,7 +279,7 @@ class HomePage extends StatelessWidget {
                             ),
                           ),
                           GestureDetector(
-                            onTap: () => onSwitchTab(2),
+                            onTap: () => widget.onSwitchTab(2),
                             child: const Icon(
                               Icons.arrow_forward,
                               color: C.primary,
@@ -344,19 +300,30 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    ...artikelList
-                        .take(3)
-                        .map(
-                          (a) => _ArtikelItem(
-                            artikel: a,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => DetailArtikelPage(artikel: a),
-                              ),
-                            ),
-                          ),
-                        ),
+                    FutureBuilder<List<SanityArticle>>(
+                      future: _articlesFuture,
+                      builder: (context, snapshot) {
+                        final articles = snapshot.data ?? [];
+                        if (articles.isEmpty) return const SizedBox.shrink();
+                        return Column(
+                          children: articles
+                              .take(3)
+                              .map(
+                                (a) => _ArtikelItem(
+                                  artikel: a,
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          DetailArtikelPage(artikel: a),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -437,7 +404,7 @@ class _HeroCard extends StatelessWidget {
 }
 
 class _ArtikelItem extends StatelessWidget {
-  final Artikel artikel;
+  final SanityArticle artikel;
   final VoidCallback onTap;
 
   const _ArtikelItem({required this.artikel, required this.onTap});
@@ -451,23 +418,22 @@ class _ArtikelItem extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: C.primary,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SvgPicture.asset(
-                    'assets/illust_m.svg',
-                    width: 80,
-                    height: 80,
-                  ),
-                ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SizedBox(
+                width: 100,
+                height: 100,
+                child: artikel.imageUrl != null
+                    ? Image.network(
+                        artikel.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => _articlePlaceholder(),
+                        loadingBuilder: (_, child, progress) =>
+                            progress == null
+                                ? child
+                                : _articlePlaceholder(),
+                      )
+                    : _articlePlaceholder(),
               ),
             ),
             const SizedBox(width: 14),
@@ -491,7 +457,7 @@ class _ArtikelItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      artikel.description,
+                      artikel.excerpt,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -502,7 +468,7 @@ class _ArtikelItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${artikel.date} • ${artikel.readTime}',
+                      '${artikel.date ?? ''} • ${artikel.readingTime ?? 3} min read',
                       style: const TextStyle(color: C.textMuted, fontSize: 12),
                     ),
                   ],
@@ -510,6 +476,28 @@ class _ArtikelItem extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _articlePlaceholder() {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: C.primary,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: SvgPicture.asset(
+            'assets/illust_m.svg',
+            width: 80,
+            height: 80,
+          ),
         ),
       ),
     );
@@ -748,27 +736,46 @@ class DetailIsyaratPage extends StatelessWidget {
   }
 }
 
-class ArtikelListPage extends StatelessWidget {
+class ArtikelListPage extends StatefulWidget {
   const ArtikelListPage({super.key});
+
+  @override
+  State<ArtikelListPage> createState() => _ArtikelListPageState();
+}
+
+class _ArtikelListPageState extends State<ArtikelListPage> {
+  late Future<List<SanityArticle>> _articlesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _articlesFuture = SanityService.getArticles(limit: 12);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: C.bgLight,
       body: SafeArea(
-        child: ListView.builder(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.only(top: 10, bottom: 20),
-          itemCount: artikelList.length,
-          itemBuilder: (_, i) => _ArtikelItem(
-            artikel: artikelList[i],
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => DetailArtikelPage(artikel: artikelList[i]),
+        child: FutureBuilder<List<SanityArticle>>(
+          future: _articlesFuture,
+          builder: (context, snapshot) {
+            final articles = snapshot.data ?? [];
+            return ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(top: 10, bottom: 20),
+              itemCount: articles.length,
+              itemBuilder: (_, i) => _ArtikelItem(
+                artikel: articles[i],
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DetailArtikelPage(artikel: articles[i]),
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -776,7 +783,7 @@ class ArtikelListPage extends StatelessWidget {
 }
 
 class DetailArtikelPage extends StatelessWidget {
-  final Artikel artikel;
+  final SanityArticle artikel;
 
   const DetailArtikelPage({super.key, required this.artikel});
 
@@ -805,23 +812,23 @@ class DetailArtikelPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: double.infinity,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: C.primary,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: SvgPicture.asset(
-                            'assets/illust_m.svg',
-                            width: 160,
-                            height: 160,
-                          ),
-                        ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 200,
+                        child: artikel.imageUrl != null
+                            ? Image.network(
+                                artikel.imageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) =>
+                                    _detailPlaceholder(),
+                                loadingBuilder: (_, child, progress) =>
+                                    progress == null
+                                        ? child
+                                        : _detailPlaceholder(),
+                              )
+                            : _detailPlaceholder(),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -838,7 +845,7 @@ class DetailArtikelPage extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     Text(
-                      artikel.description,
+                      artikel.excerpt,
                       style: const TextStyle(
                         color: C.textSub,
                         fontSize: 15,
@@ -848,7 +855,7 @@ class DetailArtikelPage extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     Text(
-                      '${artikel.date} • ${artikel.readTime}',
+                      '${artikel.date ?? ''} • ${artikel.readingTime ?? 3} min read',
                       style: const TextStyle(
                         color: C.primaryLink,
                         fontSize: 13,
@@ -858,31 +865,8 @@ class DetailArtikelPage extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     Text(
-                      artikel.body,
+                      artikel.bodyAsText,
                       style: const TextStyle(
-                        color: C.text,
-                        fontSize: 15,
-                        height: 1.7,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    Container(
-                      width: double.infinity,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD9D9D9),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    const Text(
-                      'Duis aute irure dolor in reprehenderit in voluptate velit '
-                      'esse cillum dolore eu fugiat nulla pariatur. Excepteur sint '
-                      'occaecat cupidatat non proident, sunt in culpa qui officia '
-                      'deserunt mollit anim id est laborum.',
-                      style: TextStyle(
                         color: C.text,
                         fontSize: 15,
                         height: 1.7,
@@ -893,6 +877,28 @@ class DetailArtikelPage extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailPlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: 200,
+      decoration: BoxDecoration(
+        color: C.primary,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: SvgPicture.asset(
+            'assets/illust_m.svg',
+            width: 160,
+            height: 160,
+          ),
         ),
       ),
     );

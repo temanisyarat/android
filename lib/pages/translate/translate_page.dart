@@ -111,88 +111,11 @@ class _TranslatePageState extends State<TranslatePage> {
                   ),
                 ),
               ),
-              // if (_controller.bufferReady)
-              //   Positioned(
-              //     bottom: 16,
-              //     left: 16,
-              //     right: 16,
-              //     child: _buildSubtitleOverlay(),
-              //   ),
             ],
           ),
         ),
         Expanded(child: _buildResultPanel()),
       ],
-    );
-  }
-
-  Widget _buildSubtitleOverlay() {
-    if (_controller.currentPrediction != null) {
-      final displayWords = [
-        _controller.currentPrediction!,
-        ..._controller.history.reversed.take(3),
-      ];
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.65),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              displayWords[0].toUpperCase(),
-              style: const TextStyle(
-                color: C.onPrimary,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (displayWords.length > 1) ...[
-              const SizedBox(height: 4),
-              Text(
-                displayWords.skip(1).join(' · '),
-                style: TextStyle(
-                  color: C.onPrimary.withValues(alpha: 0.5),
-                  fontSize: 14,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: C.onPrimary,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            'Memindai...',
-            style: TextStyle(
-              color: C.onPrimary.withValues(alpha: 0.54),
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

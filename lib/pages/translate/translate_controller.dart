@@ -2,11 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../services/history_service.dart';
 
 class TranslateController extends ChangeNotifier {
-  final HistoryService _historyService = HistoryService();
-
   MethodChannel? _channel;
 
   bool hasPermission = false;
@@ -19,7 +16,6 @@ class TranslateController extends ChangeNotifier {
   int writeOffset = 0;
   int totalFrames = 0;
   String? currentPrediction;
-  final List<String> history = [];
 
   bool _disposed = false;
 
@@ -27,10 +23,6 @@ class TranslateController extends ChangeNotifier {
     final status = await Permission.camera.request();
     hasPermission = status.isGranted;
     notifyListeners();
-
-    await _historyService.init();
-    final existing = await _historyService.loadExisting();
-    history.addAll(existing);
   }
 
   Future<void> requestCameraPermission() async {
@@ -89,9 +81,6 @@ class TranslateController extends ChangeNotifier {
 
     if (prediction != null && prediction != currentPrediction) {
       currentPrediction = prediction;
-      history.add(prediction);
-      if (history.length > 10) history.removeAt(0);
-      unawaited(_historyService.append(prediction));
     }
 
     inferencePulse = true;
