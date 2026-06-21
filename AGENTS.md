@@ -6,14 +6,14 @@
 - **Structure**: Monolithic Flutter project (no feature modules). All Dart source in `lib/`. Android native layer in `android/`. LiteRT inference and landmark processing run on the Android (Kotlin) side, not Dart.
 - **State**: `StatefulWidget.setState()` on main pages; `TranslateController` (extends `ChangeNotifier`) + `addListener` for translate screen.
 - **DI**: None — dependencies created inline.
-- **Networking**: None — fully offline, on-device inference.
+- **Networking**: HTTP via `http` package for Sanity CMS article fetching.
 - **Persistence**: Simple file I/O (`history.txt` via `path_provider`).
 
 ## Tool Versions (`.tool-versions`)
 
 | Tool | Version |
 |------|---------|
-| Flutter | `3.41.9` |
+| Flutter | `3.44.2` |
 | Kotlin | `2.3.21` |
 | Gradle | `9.5.1` |
 | Java | `openjdk-21` |
@@ -28,18 +28,18 @@ lib/
                                     #   CustomAppBar, CustomNavigationBar, Section2,
                                     #   Section5, ListItemWidget, SectionHeader,
                                     #   PlaceholderPage, ArtikelPage, DetailArtikel,
-                                    #   SettingsPage (966 lines)
+                                     #   SettingsPage (972 lines)
   pages/
     translate/
-      translate_page.dart           # Camera + sign translation UI (376 lines)
+      translate_page.dart           # Camera + sign translation UI (299 lines)
       translate_controller.dart     # MethodChannel bridge + prediction state +
-                                    #   buffer state + history persistence (132 lines)
+                                    #   buffer state (121 lines)
       widgets/
         scanning_dots.dart          # Animated scanning indicator (55 lines)
   services/
-    history_service.dart            # Read/write history.txt via path_provider (27 lines)
+    sanity_service.dart             # Sanity CMS article fetching via HTTP (257 lines)
 
-android/app/src/main/kotlin/com/example/android/
+android/app/src/main/kotlin/com/hibah/temanisyarat/
   MainActivity.kt                   # FlutterActivity
   handlandmarker/
     HandLandmarkerPlugin.kt         # Flutter plugin registration (PlatformViewFactory)
@@ -48,9 +48,6 @@ android/app/src/main/kotlin/com/example/android/
                                     #   + temporal smoothing (498 lines)
     HandLandmarkerHelper.kt         # MediaPipe Hand/Pose Landmarker wrapper
     HandLandmarkerOverlay.kt        # Canvas skeleton overlay
-
-android/app/src/main/kotlin/com/example/temanisyarat/
-  MainActivity.kt                   # Duplicate — merge artifact
 ```
 
 ## Data Flow
@@ -62,7 +59,7 @@ Android CameraX (PlatformView)
     -> assembleFrame()                  # 51 landmarks x 3 = 153-dim
     -> frameBuffer (circular)           # 110-frame native FloatArray buffer
     -> LiteRT Interpreter.run()         # [1,110,153] -> [1,20]
-    -> Softmax + temporal smoothing     # majority vote over 10-frame history
+    -> Softmax + temporal smoothing     # majority vote over 2-frame history
   -> MethodChannel 'temanisyarat/hand_landmarker_$id' (onLandmarks callback)
   -> TranslateController._handleLandmarks()
     -> update bufferCount, bufferReady, writeOffset, totalFrames, prediction
@@ -73,11 +70,11 @@ Android CameraX (PlatformView)
 
 ## Key Architecture Details
 
-- **Input shape**: `[1, 110, 153]` — 125 frames, each with 51 landmarks (9 pose + 21 left hand + 21 right hand) × 3 (x,y,z).
+- **Input shape**: `[1, 110, 153]` — 110 frames, each with 51 landmarks (9 pose + 21 left hand + 21 right hand) × 3 (x,y,z).
 - **Output shape**: `[1, 20]` — logits for 20 sign classes.
 - **Classes**: `aku, apel, ayah, besok, buku, dia, dua, hari ini, ibu, kamu, kuning, maaf, merah, nama, pisang, salam, satu, teman, terima kasih, tiga`.
-- **Temporal smoothing**: 10-frame history, 60% majority threshold.
-- **Confidence threshold**: 0.7 (softmax probability).
+- **Temporal smoothing**: 2-frame history, 40% majority threshold.
+- **Confidence threshold**: 0.5 (softmax probability).
 - **Model file**: `android/app/src/main/assets/models/model_raw.tflite` — loaded via Android LiteRT `Interpreter` (NOT `tflite_flutter`), copied from assets to `context.cacheDir` on first launch.
 - **Pose indices used**: `[0, 11, 12, 13, 14, 15, 16, 23, 24]` (nose, shoulders, elbows, wrists, hips).
 - **Missing landmarks**: encoded as `NaN` (Float.NaN) in the feature vector.
@@ -109,6 +106,7 @@ Android CameraX (PlatformView)
 - `permission_handler: ^12.0.1` — camera permission
 - `path_provider: ^2.1.5` — file paths
 - `flutter_svg: ^2.0.17` — SVG rendering
+- `http: ^1.2.0` — Sanity CMS article fetching
 - `flutter_launcher_icons: ^0.14.4` (dev) — icon generation
 - `flutter_lints: ^6.0.0` (dev) — lint rules
 
@@ -128,6 +126,7 @@ Note: `tflite_flutter` is NOT used — inference runs on the native Android side
 - AndroidManifest namespace (`com.hibah.temanisyarat`) matches app ID (`com.hibah.temanisyarat`).
 - `test/widget_test.dart` still contains the default Flutter counter template test (not updated for current app).
 - No `settings.gradle.kts` at Flutter project root — Android settings live inside `android/` subdirectory.
+- No `history_service.dart` anymore — history persistence was removed in favor of Sanity CMS article fetching.
 
 ## How to Run
 
@@ -147,6 +146,6 @@ flutter pub get                      # install deps
 - **Add new page/screen**: Add widget to `main.dart` or new file under `lib/pages/`, use `Navigator.push`.
 - **Modify landmark selection**: Edit `poseIndices` in `HandLandmarkerView.kt` `assembleFrame()` and adjust `FRAME_DIM` constant.
 - **Change buffer size**: Change `MAX_FRAMES` (110) in `HandLandmarkerView.kt` companion object.
-- **Tune smoothing**: Change `HISTORY_SIZE` (10) and `MAJORITY_THRESHOLD` (0.6) in `HandLandmarkerView.kt` companion object.
-- **Tune confidence**: Change `CONFIDENCE_THRESHOLD` (0.7) in `HandLandmarkerView.kt` companion object.
+- **Tune smoothing**: Change `HISTORY_SIZE` (2) and `MAJORITY_THRESHOLD` (0.4) in `HandLandmarkerView.kt` companion object.
+- **Tune confidence**: Change `CONFIDENCE_THRESHOLD` (0.5) in `HandLandmarkerView.kt` companion object.
 - **Modify UI prediction state**: Edit `TranslateController` in `lib/pages/translate/translate_controller.dart`.
