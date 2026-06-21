@@ -1,6 +1,6 @@
 # Teman Isyarat — Android App
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-3.44-02569B?logo=flutter)](https://flutter.dev)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin)](https://kotlinlang.org)
 [![MediaPipe](https://img.shields.io/badge/MediaPipe-Tasks--Vision-00BCD4)](https://developers.google.com/mediapipe)
 [![LiteRT](https://img.shields.io/badge/LiteRT-1.4-FF6F00?logo=tensorflow)](https://ai.google.dev/edge/litert)
@@ -32,7 +32,7 @@ The app is the mobile endpoint of a three-part system:
 2. **`model/`** — GRU-based neural network training & LiteRT export
 3. **`android/`** (this repo) — Flutter app wrapping the exported LiteRT model for on-device inference
 
-It recognizes **20 BISINDO vocabulary words** (Central Java dialect) through live camera feed, without requiring internet connectivity.
+It recognizes **20 BISINDO vocabulary words** (Central Java dialect) through live camera feed, without requiring internet connectivity. Articles are fetched from Sanity CMS via HTTP.
 
 | Category     | Words                                                                     |
 | ------------ | ------------------------------------------------------------------------- |
@@ -50,10 +50,9 @@ It recognizes **20 BISINDO vocabulary words** (Central Java dialect) through liv
 - **Real-time camera translation** — Live CameraX preview with on-screen prediction overlay
 - **On-device ML** — All inference runs locally via LiteRT (Google AI Edge); no network required
 - **MediaPipe landmark tracking** — Pose (9 upper-body keypoints) + hands (2 × 21 landmarks)
-- **Temporal smoothing** — Majority-vote over a 10-frame history window for stable output
+- **Temporal smoothing** — Majority-vote over a 2-frame history window for stable output
 - **Circular frame buffer** — 110-frame native `FloatArray` buffer feeding the LiteRT model
 - **Camera switch** — Toggle between front and rear cameras
-- **Translation history** — Persisted locally via `history.txt` using `path_provider`
 - **Skeleton overlay** — Live canvas rendering of detected hand and pose landmarks
 
 ## Architecture
@@ -89,7 +88,7 @@ It recognizes **20 BISINDO vocabulary words** (Central Java dialect) through liv
 2. 51 landmarks (9 pose + 21 left hand + 21 right hand) × 3 (x, y, z) are assembled per frame
 3. Landmarks are pushed into a circular 110-frame `FloatArray` buffer
 4. When full, the buffer is sent to LiteRT `Interpreter.run()` with input shape `[1, 110, 153]`
-5. Raw logits (20 classes) go through softmax → confidence threshold (0.7) → majority-vote temporal smoothing (10-frame window)
+5. Raw logits (20 classes) go through softmax → confidence threshold (0.5) → majority-vote temporal smoothing (2-frame window)
 6. The predicted label is sent back to Dart via `MethodChannel` and rendered in the UI
 
 ## Project Structure
@@ -97,25 +96,23 @@ It recognizes **20 BISINDO vocabulary words** (Central Java dialect) through liv
 ```
 temanisyarat/
 ├── lib/
-│   ├── main.dart                         # App entry, MainPage, navigation, articles, settings (966 lines)
+│   ├── main.dart                         # App entry, MainPage, navigation, articles, settings (972 lines)
 │   ├── constants.dart                    # Color palette constants (C class)
 │   ├── pages/
 │   │   └── translate/
-│   │       ├── translate_page.dart        # Camera + sign translation UI (376 lines)
-│   │       ├── translate_controller.dart  # Business logic, channel bridge, history (132 lines)
+│   │       ├── translate_page.dart        # Camera + sign translation UI (299 lines)
+│   │       ├── translate_controller.dart  # Business logic, channel bridge, state (121 lines)
 │   │       └── widgets/
 │   │           └── scanning_dots.dart     # Animated scanning indicator (55 lines)
 │   └── services/
-│       └── history_service.dart           # Local file persistence for predictions (27 lines)
-├── android/app/src/main/kotlin/com/example/android/
+│       └── sanity_service.dart            # Sanity CMS article fetching via HTTP (257 lines)
+├── android/app/src/main/kotlin/com/hibah/temanisyarat/
 │   ├── handlandmarker/
 │   │   ├── HandLandmarkerPlugin.kt        # Flutter plugin registration (PlatformViewFactory)
 │   │   ├── HandLandmarkerView.kt          # PlatformView: CameraX + landmarks + LiteRT (498 lines)
 │   │   ├── HandLandmarkerHelper.kt        # MediaPipe Hand/Pose Landmarker wrapper
 │   │   └── HandLandmarkerOverlay.kt       # Canvas skeleton overlay
 │   └── MainActivity.kt                   # FlutterActivity entry
-├── android/app/src/main/kotlin/com/example/temanisyarat/
-│   └── MainActivity.kt                   # Duplicate — merge artifact
 ├── android/app/src/main/assets/models/
 │   └── model_raw.tflite                   # Trained LiteRT classification model
 ├── android/                              # Android native project root
@@ -130,9 +127,10 @@ temanisyarat/
 
 | Component          | Technology                              |
 | ------------------ | --------------------------------------- |
-| Framework          | Flutter 3.41 / Dart                     |
+| Framework          | Flutter 3.44 / Dart                     |
 | State Management   | `StatefulWidget` + `setState`           |
 | Navigation         | `Navigator.push` / Bottom Navigation    |
+| HTTP Client        | `http` (Sanity CMS article fetching)    |
 | Persistence        | `path_provider` (file I/O)              |
 | Permissions        | `permission_handler` (camera)           |
 | Assets             | `flutter_svg` (SVG rendering)           |
@@ -158,14 +156,14 @@ temanisyarat/
 | Classes              | 20 BISINDO words            |
 | Architecture         | GRU + 1D Conv + TempAttention |
 | Model size           | ~2.6 MB (LiteRT FP16)        |
-| Temporal smoothing   | 10-frame majority vote      |
-| Confidence threshold | 0.7                         |
+| Temporal smoothing   | 2-frame majority vote       |
+| Confidence threshold | 0.5                         |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Flutter 3.41+ (see `.tool-versions`)
+- Flutter 3.44+ (see `.tool-versions`)
 - JDK 17+ (OpenJDK 26 recommended)
 - Android SDK (compileSdk from Flutter Gradle plugin)
 - Android device or emulator (API 24+)
