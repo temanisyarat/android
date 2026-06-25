@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class SanityBlock {
@@ -153,9 +154,15 @@ class SanityService {
       if (response.statusCode == 200) {
         final payload = jsonDecode(response.body) as Map<String, dynamic>;
         final result = payload['result'];
-        if (result != null) return result as T;
+        if (result != null) {
+          debugPrint('[SanityService] Fetch success: ${url.path}');
+          return result as T;
+        }
       }
-    } catch (_) {}
+      debugPrint('[SanityService] Fetch failed (status ${response.statusCode}): ${url.path}');
+    } catch (e) {
+      debugPrint('[SanityService] Fetch error: $e');
+    }
     return fallback;
   }
 
