@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'constants.dart';
 import 'pages/translate/translate_page.dart';
 import 'services/sanity_service.dart';
+
+String _formatDate(String? date) {
+  if (date == null) return '';
+  final parsed = DateTime.tryParse(date);
+  if (parsed == null) return '';
+  return DateFormat('dd-MM-yyyy').format(parsed);
+}
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,8 +63,8 @@ class IsyaratItem {
 const List<IsyaratItem> isyaratList = [
   IsyaratItem(
     number: 1,
-    kode: 'Saya',
-    label: 'Saya',
+    kode: 'Aku',
+    label: 'Aku',
     placeholderColor: Color(0xFF9E9E9E),
   ),
   IsyaratItem(
@@ -66,31 +75,113 @@ const List<IsyaratItem> isyaratList = [
   ),
   IsyaratItem(
     number: 3,
-    kode: 'Teman',
-    label: 'Teman',
+    kode: 'Dia',
+    label: 'Dia',
     placeholderColor: Color(0xFF9E9E9E),
   ),
   IsyaratItem(
     number: 4,
-    kode: 'Apel',
-    label: 'Apel',
+    kode: 'Salam',
+    label: 'Salam',
     placeholderColor: Color(0xFF9E9E9E),
   ),
   IsyaratItem(
     number: 5,
+    kode: 'Terima Kasih',
+    label: 'Terima Kasih',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 6,
+    kode: 'Maaf',
+    label: 'Maaf',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 7,
+    kode: 'Nama',
+    label: 'Nama',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 8,
+    kode: 'Hari Ini',
+    label: 'Hari Ini',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 9,
     kode: 'Besok',
     label: 'Besok',
     placeholderColor: Color(0xFF9E9E9E),
   ),
   IsyaratItem(
-    number: 6,
+    number: 10,
+    kode: 'Merah',
+    label: 'Merah',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 11,
+    kode: 'Kuning',
+    label: 'Kuning',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 12,
     kode: 'Ayah',
     label: 'Ayah',
     placeholderColor: Color(0xFF9E9E9E),
   ),
+  IsyaratItem(
+    number: 13,
+    kode: 'Ibu',
+    label: 'Ibu',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 14,
+    kode: 'Satu',
+    label: 'Satu',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 15,
+    kode: 'Dua',
+    label: 'Dua',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 16,
+    kode: 'Tiga',
+    label: 'Tiga',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 17,
+    kode: 'Teman',
+    label: 'Teman',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 18,
+    kode: 'Buku',
+    label: 'Buku',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 19,
+    kode: 'Apel',
+    label: 'Apel',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
+  IsyaratItem(
+    number: 20,
+    kode: 'Pisang',
+    label: 'Pisang',
+    placeholderColor: Color(0xFF9E9E9E),
+  ),
 ];
-
-
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -265,28 +356,28 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                     const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Artikel',
-                            style: TextStyle(
-                              color: C.primary,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
+                    GestureDetector(
+                      onTap: () => widget.onSwitchTab(2),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Artikel',
+                              style: TextStyle(
+                                color: C.primary,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                          GestureDetector(
-                            onTap: () => widget.onSwitchTab(2),
-                            child: const Icon(
+                            const Icon(
                               Icons.arrow_forward,
                               color: C.primary,
                               size: 22,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     const Padding(
@@ -429,9 +520,7 @@ class _ArtikelItem extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => _articlePlaceholder(),
                         loadingBuilder: (_, child, progress) =>
-                            progress == null
-                                ? child
-                                : _articlePlaceholder(),
+                            progress == null ? child : _articlePlaceholder(),
                       )
                     : _articlePlaceholder(),
               ),
@@ -450,9 +539,9 @@ class _ArtikelItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: C.text,
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        height: 1.3,
+                        height: 1.2,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -462,13 +551,13 @@ class _ArtikelItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: C.textSub,
-                        fontSize: 13,
-                        height: 1.4,
+                        fontSize: 12,
+                        height: 1,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${artikel.date ?? ''} • ${artikel.readingTime ?? 3} min read',
+                      '${_formatDate(artikel.date)} • ${artikel.readingTime ?? 3} min read',
                       style: const TextStyle(color: C.textMuted, fontSize: 12),
                     ),
                   ],
@@ -493,11 +582,7 @@ class _ArtikelItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         child: Align(
           alignment: Alignment.bottomCenter,
-          child: SvgPicture.asset(
-            'assets/illust_m.svg',
-            width: 80,
-            height: 80,
-          ),
+          child: SvgPicture.asset('assets/illust_m.svg', width: 80, height: 80),
         ),
       ),
     );
@@ -618,17 +703,10 @@ class _BelajarPageState extends State<BelajarPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '#${item.number} - ${item.kode}',
-                                style: const TextStyle(
-                                  color: C.textMuted,
-                                  fontSize: 11,
-                                ),
-                              ),
-                              Text(
-                                item.label,
+                                '${item.number} - ${item.label}',
                                 style: const TextStyle(
                                   color: C.text,
-                                  fontSize: 14,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -821,12 +899,11 @@ class DetailArtikelPage extends StatelessWidget {
                             ? Image.network(
                                 artikel.imageUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) =>
-                                    _detailPlaceholder(),
+                                errorBuilder: (_, _, _) => _detailPlaceholder(),
                                 loadingBuilder: (_, child, progress) =>
                                     progress == null
-                                        ? child
-                                        : _detailPlaceholder(),
+                                    ? child
+                                    : _detailPlaceholder(),
                               )
                             : _detailPlaceholder(),
                       ),
@@ -845,17 +922,7 @@ class DetailArtikelPage extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     Text(
-                      artikel.excerpt,
-                      style: const TextStyle(
-                        color: C.textSub,
-                        fontSize: 15,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    Text(
-                      '${artikel.date ?? ''} • ${artikel.readingTime ?? 3} min read',
+                      '${_formatDate(artikel.date)} • ${artikel.readingTime ?? 3} min read',
                       style: const TextStyle(
                         color: C.primaryLink,
                         fontSize: 13,
@@ -937,10 +1004,25 @@ class SettingsPage extends StatelessWidget {
           _SettingTile(
             icon: Icons.privacy_tip_outlined,
             label: 'Kebijakan Privasi',
+            url:
+                'https://www.termsfeed.com/live/5447ad9a-3da9-426c-be49-30e8c70bb2f1',
           ),
-          _SettingTile(icon: Icons.storage_outlined, label: 'Akses ke Dataset'),
-          _SettingTile(icon: Icons.star_border, label: 'Beri Rating'),
-          _SettingTile(icon: Icons.language, label: 'Website'),
+          _SettingTile(
+            icon: Icons.storage_outlined,
+            label: 'Akses ke Dataset',
+            url: 'https://github.com/temanisyarat/dataset',
+          ),
+          _SettingTile(
+            icon: Icons.star_border,
+            label: 'Beri Rating',
+            url:
+                'https://play.google.com/store/apps/details?id=com.hibah.temanisyarat',
+          ),
+          _SettingTile(
+            icon: Icons.language,
+            label: 'Website',
+            url: 'https://temanisyarat.com',
+          ),
         ],
       ),
     );
@@ -950,8 +1032,13 @@ class SettingsPage extends StatelessWidget {
 class _SettingTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String url;
 
-  const _SettingTile({required this.icon, required this.label});
+  const _SettingTile({
+    required this.icon,
+    required this.label,
+    required this.url,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -966,7 +1053,7 @@ class _SettingTile extends StatelessWidget {
           fontWeight: FontWeight.w400,
         ),
       ),
-      onTap: () {},
+      onTap: () => launchUrl(Uri.parse(url)),
     );
   }
 }
